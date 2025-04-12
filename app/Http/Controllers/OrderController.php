@@ -42,7 +42,7 @@ class OrderController extends Controller
 
         if($user->role === 'merchant') {
 
-            // ai 
+            // ai
             $shippingRates = ShippingRate::getCurrentPrices();
 
             return view('orders.create', [
@@ -138,10 +138,14 @@ class OrderController extends Controller
         $shippingTypes = Order::SHIPPING_TYPES;
         $paymentTypes = Order::PAYMENT_TYPES;
 
-        if ($user->role === 'merchant') {
+        // Get shipping rates that were active when the order was created
+        $shippingRates = ShippingRate::where('created_at', '<=', $order->created_at)
+            ->latest()
+            ->first();
 
-            return view('orders.edit', compact('order', 'regions', 'shippingTypes', 'paymentTypes'));
-        }else{
+        if ($user->role === 'merchant') {
+            return view('orders.edit', compact('order', 'regions', 'shippingTypes', 'paymentTypes', 'shippingRates'));
+        } else {
             abort(403);
         }
     }
