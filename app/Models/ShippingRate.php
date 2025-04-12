@@ -24,4 +24,9 @@ class ShippingRate extends Model
         'express_shipping_fee' => 'float',
         'weight_limit' => 'float'
     ];
+
+    public static function getCurrentPrices()
+    {
+        return self::latest()->first();
+    }
 }

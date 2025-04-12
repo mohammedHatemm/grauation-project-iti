@@ -191,6 +191,16 @@
             </div>
     @push('script')
         <script>
+            // Remove or comment out the incorrect orderObserverPrice
+            // const orderObserverPrice = [
+            //     {
+            //         basePrice = App/
+            //     }
+            // ]
+
+            // Add the shipping rates from the observer
+            const shippingRates = @json($shippingRates);  // We'll pass this from the controller
+
             document.addEventListener("DOMContentLoaded", function () {
                 let productCount = 1;
 
@@ -252,7 +262,6 @@
                     const villageCheckbox = document.querySelector('input[name="village"]');
                     const shippingType = document.querySelector('select[name="shipping_type"]').value;
 
-
                     let totalOrderPrice = 0;
                     let totalWeight = 0;
 
@@ -265,20 +274,20 @@
                         totalWeight += weight * quantity;
                     });
 
+                    let shippingPrice = shippingRates.base_shipping_price;
+                    let extraWeight = totalWeight > shippingRates.weight_limit ?
+                        totalWeight - shippingRates.weight_limit : 0;
 
-                    let shippingPrice = 20;  // سعر الشحن الأساسي
-                    let extraWeight = totalWeight > 5 ? totalWeight - 5 : 0;
-
-                    if (totalWeight > 5) {
-                        shippingPrice += extraWeight * 10;
+                    if (extraWeight > 0) {
+                        shippingPrice += extraWeight * shippingRates.extra_weight_price_per_kg;
                     }
 
                     if (villageCheckbox && villageCheckbox.checked) {
-                        shippingPrice += 20; // رسوم القرية
+                        shippingPrice += shippingRates.village_fee;
                     }
 
                     if (shippingType === "shipping_in_24_hours") {
-                        shippingPrice += 20;
+                        shippingPrice += shippingRates.express_shipping_fee;
                     }
 
                     document.getElementById('order_price').value = totalOrderPrice.toFixed(2);

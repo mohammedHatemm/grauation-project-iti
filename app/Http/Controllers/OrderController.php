@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Region;
+use App\Models\ShippingRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +41,29 @@ class OrderController extends Controller
         $paymentTypes = Order::PAYMENT_TYPES;
 
         if($user->role === 'merchant') {
-            return view('orders.create', compact('regions', 'shippingTypes', 'paymentTypes'));
+
+            // ai 
+            $shippingRates = ShippingRate::getCurrentPrices();
+
+            return view('orders.create', [
+                'regions' => $regions,
+                'shippingTypes' => $shippingTypes,
+                'paymentTypes' => $paymentTypes,
+                'shippingRates' => $shippingRates,
+            ]);
         }
         else{
             abort(403);
         }
+
+
+
+// giminai
+
+
+
+
+
     }
 
     /**
