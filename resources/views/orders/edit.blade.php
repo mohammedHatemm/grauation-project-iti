@@ -191,7 +191,7 @@
     </div>
     @push('script')
     <script>
-       const shippingRates = @json($shippingRatesData) || {
+        const shippingRates = @json($shippingRatesData) || {
             base_shipping_price: 0,
             weight_limit: 0,
             extra_weight_price_per_kg: 0,
@@ -199,158 +199,126 @@
             express_shipping_fee: 0
         };
 
-        function updateDeleteButtons() {
-            const removeProductButtons = document.querySelectorAll('.remove-product');
-            const productRows = document.querySelectorAll('#products-container > div');
-
-            if (productRows.length <= 1) {
-                removeProductButtons.forEach(button => button.style.display = 'none');
-            } else {
-                removeProductButtons.forEach(button => button.style.display = 'flex');
-            }
-        }
-
         document.addEventListener("DOMContentLoaded", function() {
-                const existingRows = document.querySelectorAll('#products-container > div');
-                existingRows.forEach(row => row.classList.add('product-row'));
-                updateDeleteButtons();
-                let productCount = existingRows.length;
+            let productCount = 1;
 
-                document.getElementById('add-product').addEventListener('click', function() {
-                    updateDeleteButtons();
-                    const container = document.getElementById('products-container');
-                    const index = productCount;
-                    const newRow = document.createElement('div');
-                    newRow.className = 'p-4 rounded mb-4 product-row';
+            function updateDeleteButtons() {
+                const productRows = document.querySelectorAll('#products-container > div.p-4');
+                const removeButtons = document.querySelectorAll('.remove-product');
 
-                    newRow.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                    <x-input-label value="Product Name"/>
-                    <input name="products[${index}][product_name]" type="text" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-[#10b981] shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required/>
-                </div>
-                <div>
-                    <x-input-label value="Quantity"/>
-                    <input name="products[${index}][product_quantity]" type="number" step="1" oninput="this.value = Math.abs(this.value)"  min="1" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-[#10b981] shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required/>
-                </div>
-                <div>
-                    <x-input-label value="Weight (kg)"/>
-                    <input name="products[${index}][product_weight]" type="number" oninput="this.value = Math.abs(this.value)" step="0.01" min="0.1" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-[#10b981] shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required/>
-                </div>
-                <div>
-                    <x-input-label value="Price (EGP)"/>
-                    <input name="products[${index}][product_price]" oninput="this.value = Math.abs(this.value)" type="number" step="0.01" min="0" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-[#10b981] shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required/>
-                </div>
-                <div class="flex justify-center items-center">
-                    <button type="button" class="remove-product bg-red-500 text-white p-2 rounded-full flex items-center justify-center w-10 h-10">
-                        <span class="heroicons--trash"></span>
-                    </button>
-                </div>
-            </div>
-        `;
-
-                    container.appendChild(newRow);
-                    productCount++;
-                    updateCalculations();
+                removeButtons.forEach(button => {
+                    button.closest('div').style.display = productRows.length <= 1 ? 'none' : 'flex';
                 });
+            }
 
-                document.getElementById('products-container').addEventListener('click', function(e) {
-                    if (e.target.closest('.remove-product')) {
-                        const row = e.target.closest('div[class*="product-row"], #products-container > div');
-                        if (row) {
-                            row.remove();
-                            updateCalculations();
-                            updateDeleteButtons();
-                        }
-                    }
-                });
+            // Add new product
+            document.getElementById('add-product').addEventListener('click', function() {
+                const container = document.getElementById('products-container');
+                const newRow = document.createElement('div');
+                newRow.className = 'p-4 rounded mb-4';
 
-                document.addEventListener('input', function(e) {
-                    if (e.target.name && (e.target.name.includes('[product_price]') ||
-                            e.target.name.includes('[product_quantity]') ||
-                            e.target.name.includes('[product_weight]') ||
-                            e.target.name === 'village' ||
-                            e.target.name === 'shipping_type')) {
+                newRow.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                            <x-input-label value="Product Name"/>
+                            <input name="products[${productCount}][product_name]" type="text" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-white shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required/>
+                        </div>
+                        <div>
+                            <x-input-label value="Quantity"/>
+                            <input name="products[${productCount}][product_quantity]" type="number" step="1" min="1" value="0" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-white shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required oninput="this.value = Math.abs(this.value)"/>
+                        </div>
+                        <div>
+                            <x-input-label value="Weight (kg)"/>
+                            <input name="products[${productCount}][product_weight]" type="number" step="0.01" min="0.1" value="0" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-white shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required oninput="this.value = Math.abs(this.value)"/>
+                        </div>
+                        <div>
+                            <x-input-label value="Price (EGP)"/>
+                            <input name="products[${productCount}][product_price]" type="number" step="0.01" min="0" value="0" class="block mt-1 w-full border rounded dark:bg-[#18181b] border-[#10b981] dark:border-gray-700 text-white shadow-sm focus:ring-[#10b981] dark:focus:ring-[#10b981]" required oninput="this.value = Math.abs(this.value)"/>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <button type="button" class="remove-product bg-red-500 text-white p-2 rounded-full flex items-center justify-center w-10 h-10">
+                                <span class="heroicons--trash"></span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(newRow);
+                productCount++;
+                // updateCalculations();
+                // updateDeleteButtons();
+            });
+
+            // Remove product button handler
+            document.getElementById('products-container').addEventListener('click', function(e) {
+                const removeBtn = e.target.closest('.remove-product');
+                if (removeBtn) {
+                    const row = removeBtn.closest('.p-4');
+                    if (row && document.querySelectorAll('#products-container > div.p-4').length > 1) {
+                        row.remove();
                         updateCalculations();
-
+                        updateDeleteButtons();
                     }
+                }
+            });
+
+            function updateCalculations() {
+                const productPrices = document.querySelectorAll('input[name^="products"][name$="[product_price]"]');
+                const productQuantities = document.querySelectorAll('input[name^="products"][name$="[product_quantity]"]');
+                const productWeights = document.querySelectorAll('input[name^="products"][name$="[product_weight]"]');
+                const villageCheckbox = document.querySelector('input[name="village"]');
+                const shippingType = document.querySelector('select[name="shipping_type"]').value;
+
+                let totalOrderPrice = 0;
+                let totalWeight = 0;
+
+                productPrices.forEach((priceInput, index) => {
+                    const price = parseFloat(priceInput.value) || 0;
+                    const quantity = parseInt(productQuantities[index].value) || 1;
+                    const weight = parseFloat(productWeights[index].value) || 0;
+
+                    totalOrderPrice += price * quantity;
+                    totalWeight += weight * quantity;
                 });
 
-                function updateCalculations() {
-                    const productPrices = document.querySelectorAll('input[name^="products"][name$="[product_price]"]');
-                    const productQuantities = document.querySelectorAll('input[name^="products"][name$="[product_quantity]"]');
-                    const productWeights = document.querySelectorAll('input[name^="products"][name$="[product_weight]"]');
-                    const villageCheckbox = document.getElementById('village-checkbox');
-                    const shippingTypeSelect = document.getElementById('shipping_type');
+                let shippingPrice = shippingRates.base_shipping_price || 0;
 
-                    let totalPrice = 0;
-                    let totalWeight = 0;
-
-                    for (let i = 0; i < productPrices.length; i++) {
-                        const price = parseFloat(productPrices[i].value) || 0;
-                        const quantity = parseInt(productQuantities[i].value) || 0;
-                        const weight = parseFloat(productWeights[i].value) || 0;
-
-                        totalPrice += price * quantity;
-                        totalWeight += weight * quantity;
-                    }
-
-                    document.getElementById('order_price').value = totalPrice.toFixed(2);
-                    document.getElementById('total_weight').value = totalWeight.toFixed(2);
-
-                    let shippingPrice = shippingRates.base_shipping_price;
-
-                    if (totalWeight > shippingRates.weight_limit) {
-                        const extraWeight = totalWeight - shippingRates.weight_limit;
-                        shippingPrice += extraWeight * shippingRates.extra_weight_price_per_kg;
-                    }
-
-                    if (villageCheckbox.checked) {
-                        shippingPrice += shippingRates.village_fee;
-                    }
-
-                    if (shippingTypeSelect.value === 'express') {
-                        shippingPrice += shippingRates.express_shipping_fee;
-                    }
-
-                    document.getElementById('shipping_price').value = shippingPrice.toFixed(2);
-                    document.getElementById('total_price').value = (totalPrice + shippingPrice).toFixed(2);
+                if (totalWeight > shippingRates.weight_limit) {
+                    const extraWeight = totalWeight - shippingRates.weight_limit;
+                    shippingPrice += extraWeight * shippingRates.extra_weight_price_per_kg;
                 }
 
-            const villageCheckbox = document.getElementById('village-checkbox');
-            const shippingType = document.querySelector('select[name="shipping_type"]').value;
+                if (villageCheckbox && villageCheckbox.checked) {
+                    shippingPrice += shippingRates.village_fee || 0;
+                }
 
-            let totalOrderPrice = 0;
-            let totalWeight = 0;
+                if (shippingType === "shipping_in_24_hours") {
+                    shippingPrice += shippingRates.express_shipping_fee || 0;
+                }
 
-            for (let i = 0; i < productPrices.length; i++) {
-                const price = parseFloat(productPrices[i].value) || 0;
-                const quantity = parseFloat(productQuantities[i].value) || 1;
-                const weight = parseFloat(productWeights[i].value) || 0;
-
-                totalOrderPrice += price * quantity;
-                totalWeight += weight * quantity;
+                document.getElementById('order_price').value = totalOrderPrice.toFixed(2);
+                document.getElementById('shipping_price').value = shippingPrice.toFixed(2);
+                document.getElementById('total_weight').value = totalWeight.toFixed(2);
+                document.getElementById('total_price').value = (totalOrderPrice + shippingPrice).toFixed(2);
             }
 
-            let shippingPrice = 20; // سعر الشحن الأساسي
-            let extraWeight = totalWeight > 5 ? totalWeight - 5 : 0;
+            // Handle input changes for all relevant fields
+            document.addEventListener('input', function(e) {
+                if (e.target.name && (
+                    e.target.name.includes('[product_price]') ||
+                    e.target.name.includes('[product_quantity]') ||
+                    e.target.name.includes('[product_weight]') ||
+                    e.target.name === 'village' ||
+                    e.target.name === 'shipping_type'
+                )) {
+                    updateCalculations();
+                }
+            });
 
-            if (totalWeight > 5) {
-                shippingPrice += extraWeight * 10;
-            }
-
-            if (villageCheckbox && villageCheckbox.checked) {
-                shippingPrice += 20; // رسوم القرية
-            }
-
-            if (shippingType === "shipping_in_24_hours") {
-                shippingPrice += 20; // رسوم الشحن السريع
-            }
-
-            document.getElementById('order_price').value = totalOrderPrice.toFixed(2); document.getElementById('total_weight').value = totalWeight.toFixed(2); document.getElementById('shipping_price').value = shippingPrice.toFixed(2); document.getElementById('total_price').value = (totalOrderPrice + shippingPrice).toFixed(2);
-        }
-
-
+            // Initial setup
+            // updateCalculations();
+            // updateDeleteButtons();
+        });
     </script>
     @endpush
 </x-app-layout>
