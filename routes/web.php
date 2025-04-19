@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DeliveryManController;
 use App\Http\Controllers\ProfileController;
@@ -33,7 +34,7 @@ Route::prefix('employee/orders')->name('employee.orders.')->middleware(['auth'])
 });
 
 //? menna employee
-Route::middleware(['auth'])->group(function ()  {
+Route::middleware(['auth'])->group(function () {
     Route::get('/employee/orders', [EmployeeController::class, 'index'])->name('employee.orders.index');
     Route::get('/employee/orders/pending', [EmployeeController::class, 'pendingOrders'])->name('employee.orders.pending');
     Route::get('/employee/orders/empdash', [EmployeeController::class, 'empdashboard'])->name('employee.orders.empdash');
@@ -56,8 +57,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
-Route::middleware('auth')->group(function (){
-//? mostafa merchant
+Route::middleware('auth')->group(function () {
+    //? mostafa merchant
     Route::resource('orders', OrderController::class);
     Route::put('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders-report', [OrderController::class, 'report'])->name('orders.report');
@@ -72,6 +73,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Chat interface
+    Route::get('/chat', function () {
+        return view('chat');
+    })->name('chat');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

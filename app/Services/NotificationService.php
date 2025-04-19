@@ -3,61 +3,140 @@
 namespace App\Services;
 
 use App\Events\NotificationCreated;
+use App\Events\NotificationStatusChanged;
 use App\Models\Notification;
-use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class NotificationService
 {
+    /**
+     * Create a new notification
+     *
+     * @param Model $notifiable
+     * @param string $type
+     * @param array $data
+     * @return Notification
+     * @throws \InvalidArgumentException
+     */
+    public function create(Model $notifiable, string $type, array $data): Notification
+    {
+        // Validate notification data
+        $validator = Validator::make([
+            'type' => $type,
+            'data' => $data
+        ], [
+            'type' => 'required|string|max:255',
+            'data' => 'required|array'
+        ]);
 
-  public function create(Model $notifiable, string $type, array $data): Notification
-  {
-    $notification = Notification::create([
-      'type' => $type,
-      'notifiable_type' => get_class($notifiable),
-      'notifiable_id' => $notifiable->id,
-      'data' => $data
-    ]);
+        if ($validator->fails()) {
+            throw new \InvalidArgumentException($validator->errors()->first());
+        }
 
-    event(new NotificationCreated($notification));
-    return $notification;
-  }
+        try {
+            $notification = Notification::create([
+                'type' => $type,
+                'notifiable_type' => get_class($notifiable),
+                'notifiable_id' => $notifiable->id,
+                'data' => $data,
+                'read_at' => null
+            ]);
 
-  public function markAsRead($notification): void
-  {
-    if ($notification instanceof Notification || $notification instanceof \Illuminate\Notifications\DatabaseNotification) {
-      $notification->forceFill(['read_at' => now()])->save();
-      event(new NotificationCreated($notification));
-    }
-  }
-
-  public function markAllAsRead(\Illuminate\Contracts\Auth\Authenticatable $notifiable): void
-  {
-    $notifications = $notifiable->customNotifications()
-      ->whereNull('read_at')
-      ->get();
-
-    foreach ($notifications as $notification) {
-      $notification->forceFill(['read_at' => now()])->save();
-      event(new NotificationCreated($notification));
-    }
-  }
-
-  public function getUnreadCount(\Illuminate\Contracts\Auth\Authenticatable $notifiable): int
-  {
-    return $notifiable->customNotifications()
-      ->whereNull('read_at')
-      ->count();
-  }
-
-  public function getNotifications(\Illuminate\Contracts\Auth\Authenticatable $notifiable, bool $onlyUnread = false)
-  {
-    $query = $notifiable->customNotifications();
-
-    if ($onlyUnread) {
-      $query->whereNull('read_at');
+            event(new NotificationCreated($notification));
+            return $notification;
+        } catch (\Exception $e) {
+            \Log::error('Failed to create notification: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
-    return $query->latest()->get();
-  }
+    /**
+     * Mark a notification as read
+     *
+     * @param Notification|\Illuminate\Notifications\DatabaseNotification $notification
+     * @return void
+     * @throws \InvalidArgumentException
+     */
+    public function markAsRead($notification): void
+    {
+        if (!($notification instanceof Notification) &&
+            !($notification instanceof \Illuminate\Notifications\DatabaseNotification)) {
+            throw new \InvalidArgumentException('Invalid notification object');
+        }
+
+        try {
+            $notification->forceFill(['read_at' => now()])->save();
+            event(new NotificationStatusChanged($notification));
+        } catch (\Exception $e) {
+            \Log::error('Failed to mark notification as read: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Mark all notifications as read for a user
+     *
+     * @param Authenticatable $notifiable
+     * @return void
+     */
+    public function markAllAsRead(Authenticatable $notifiable): void
+    {
+        try {
+            // More efficient batch update
+            $notifiable->customNotifications()
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+
+            // Fire event for real-time updates
+            event(new NotificationStatusChanged([
+                'notifiable_id' => $notifiable->id,
+                'notifiable_type' => get_class($notifiable),
+                'bulk_update' => true
+            ]));
+        } catch (\Exception $e) {
+            \Log::error('Failed to mark all notifications as read: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get unread notification count
+     *
+     * @param Authenticatable $notifiable
+     * @return int
+     */
+    public function getUnreadCount(Authenticatable $notifiable): int
+    {
+        try {
+            return $notifiable->customNotifications()->whereNull('read_at')->count();
+        } catch (\Exception $e) {
+            \Log::error('Failed to get unread count: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Get notifications for a user
+     *
+     * @param Authenticatable $notifiable
+     * @param bool $onlyUnread
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getNotifications(Authenticatable $notifiable, bool $onlyUnread = false)
+    {
+        try {
+            $query = $notifiable->customNotifications();
+
+            if ($onlyUnread) {
+                $query->whereNull('read_at');
+            }
+
+            return $query->latest()->get();
+        } catch (\Exception $e) {
+            \Log::error('Failed to get notifications: ' . $e->getMessage());
+            return collect();
+        }
+    }
 }

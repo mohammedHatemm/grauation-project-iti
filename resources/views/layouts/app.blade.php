@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +11,10 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +25,7 @@
         * {
             font-family: "Poppins", serif;
         }
+
         .heroicons--trash {
             display: inline-block;
             width: 24px;
@@ -38,32 +41,35 @@
         }
     </style>
 </head>
+
 <body class="font-sans antialiased bg-gray-100 dark:bg-[#18181b] text-gray-900 dark:text-gray-200">
 
-@if (!request()->routeIs(['employee.orders.pending', 'employee.orders.show']))
+    @if (!request()->routeIs(['employee.orders.pending', 'employee.orders.show']))
     @include('components.loader')
-@endif
+    @endif
 
-<div class="min-h-screen bg-gray-100 dark:bg-[#18181b]">
-    @include('layouts.navigation')
+    <div class="min-h-screen bg-gray-100 dark:bg-[#18181b]">
+        @include('layouts.navigation')
 
-    <!-- Page Heading -->
-    @isset($header)
+        <!-- Page Heading -->
+        @isset($header)
         <header class="bg-[#202022] shadow-2xl shadow-black/50">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-gray-200">
                 {{ $header }}
             </div>
         </header>
-    @endisset
+        @endisset
 
-    <!-- Page Content -->
-    <main>
-        {{ $slot }}
+        <!-- Page Content -->
+        <main>
+            {{ $slot }}
+        </main>
 
-    </main>
-    @stack('script')
+        @stack('script')
+        @stack('scripts')
+    </div>
 
-</div>
-
+    @livewireScripts
 </body>
+
 </html>

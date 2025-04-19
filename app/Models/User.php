@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasNotifications;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use App\Traits\HasNotifications;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
@@ -58,9 +58,14 @@ class User extends Authenticatable
     }
 
 
-    public function order(): HasMany
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
     }
 
 
