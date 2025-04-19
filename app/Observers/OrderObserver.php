@@ -4,13 +4,35 @@ namespace App\Observers;
 
 use App\Models\Order;
 use App\Models\ShippingRate;
+use App\Models\User;
 
 class OrderObserver
 {
     /**
      * Handle the Order "created" event.
      */
+    public function created(Order $order): void
+    {
+        // Notify employees about the new order
+        $employees = User::where('role', 'employee')->get();
 
+        foreach ($employees as $employee) {
+            $employee->customNotify('new_order', [
+                'title' => 'New Order Created',
+                'message' => "A new order has been created by {$order->user->name}"
+            ]);
+        }
+
+        // Notify merchants about the new order
+        $merchants = User::where('role', 'merchant')->get();
+
+        foreach ($merchants as $merchant) {
+            $merchant->customNotify('new_order', [
+                'title' => 'New Purchase Order',
+                'message' => "New order #{$order->id} requires your attention"
+            ]);
+        }
+    }
 
     public function creating(Order $order): void
     {
@@ -69,6 +91,19 @@ class OrderObserver
      */
     public function updated(Order $order): void
     {
+        // Check if status was changed
+        if ($order->isDirty('status')) {
+            $merchants = User::where('role', 'merchant')->get();
+            foreach ($merchants as $merchant) {
+                $merchant->customNotify('order_status_changed', [
+                    'title' => 'Order Status Updated',
+                    'message' => "Order #{$order->id} status has been updated to {$order->status}",
+                    'order_id' => $order->id,
+                    'status' => $order->status
+                ]);
+            }
+        }
+
         $order->total_weight = 0;
         $order->total_price = 0;
         $order->order_price = 0;
@@ -81,7 +116,7 @@ class OrderObserver
         }
 
         // استخدام أحدث معدلات الشحن عند إنشاء الطلب
-        $shippingRateData = ShippingRate::getRatesForOrderEdit( $order);
+        $shippingRateData = ShippingRate::getRatesForOrderEdit($order);
         if (!$shippingRateData) {
             // إذا لم يكن هناك معدل شحن، استخدم المعدل الافتراضي
             $shippingRate = ShippingRate::create([

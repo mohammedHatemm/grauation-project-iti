@@ -57,6 +57,13 @@
 
             </div>
 
+            <!-- Notifications -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <div x-data="{ open: false }" @click.away="open = false" class="relative">
+                    @livewire('notification-list')
+                </div>
+            </div>
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">

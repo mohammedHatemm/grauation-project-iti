@@ -12,6 +12,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \App\Events\NotificationCreated::class => [
+            \App\Listeners\RefreshNotifications::class,
+        ],
     ];
 
     public function boot(): void
